@@ -1,0 +1,18 @@
+language:
+  python
+
+os:
+  - linux
+#  - osx
+
+python:
+  - '3.6'
+
+git:
+  depth: false
+
+install:
+  pip install -r test_requirements.txt
+
+script:
+  nose2 --coverage . -s test
