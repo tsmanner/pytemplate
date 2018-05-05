@@ -5,8 +5,6 @@ Simple entry point script for pytemplate.
 """
 
 
-# Standard Library
-import sys
 # PyTemplate
 from pytemplate import main
 

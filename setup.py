@@ -7,10 +7,16 @@ setup(
     author='Tom Manner',
     author_email='tom.s.manner@gmail.com',
     url='https://www.github.com/tsmanner/pytemplate',
+    # Packages to install
     packages=[
         'pytemplate',
     ],
+    # Executables to install
     scripts=[
         "bin/pytemplate",
+    ],
+    # Libraries required by install
+    install_requires=[
+        "pyaml"
     ],
 )

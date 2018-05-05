@@ -1,7 +1,7 @@
 --index-url https://pypi.python.org/simple/
 
 # To specify a library etc from a particular repo:
-# -e https://github.com/foo/bar.git#egg=bar
+# -e https://github.com/<username>/<reponame>.git#egg=bar
 
 # Install all requirements found in `setup.py`
 -e .
@@ -11,5 +11,4 @@ coverage>=4.5
 coverage-badge
 nose2
 nose2[coverage_plugin]>=0.6.5
-numpy
 pylint

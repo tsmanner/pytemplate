@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # run-tests.sh
 #
 # Sets up 
@@ -52,7 +53,7 @@ __setup_venv() {
     if [ "$?" = "0" ] ; then
       __stderr echo "    python$1 ($__python) -> venv$1"
       . venv$1/bin/activate
-      pip install .
+      pip install -r requirements.txt
     else
       __stderr echo "    virtualenv executable not found for $__python!"
       exit 1
@@ -71,7 +72,7 @@ __do_tests() {
     __python=python
   fi
   which $__python
-  nose2 -s test/
+  nose2 -s test/  # TODO: figure out how to inject the "script:" stuff from .travis.yml here.
   echo "---------Complete---------"
   echo
 }

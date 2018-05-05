@@ -1,0 +1,50 @@
+TravisCI:
+  os:
+    choices:
+      - linux
+      - osx
+      - windows
+    default:
+      - linux
+
+  python:
+    default:
+      - '2.7'
+      - '3.6'
+
+  test_runner:
+    default:
+      nose2
+    choices:
+      nose:
+        options:
+          - ""
+      nose2:
+        options:
+          - '--coverage {package_dirs}'
+      unittest:
+        options:
+          - ""
+      unittest2:
+        options:
+          - ""
+      pytest:
+        options:
+          - ""
+
+test_requirements:
+  concrete_packages:
+    format:
+      # For example: `-e https://github.com/username/reponame.git#egg=reponame`
+      "-e {url}"
+  abstract_packages:
+    choices:
+      - anybadge==0.1.0.dev2
+      - coverage
+      - coverage-badge
+      - nose
+      - nose2
+      - nose2[coverage_plugin]>=0.6.5
+      - pylint
+    default:
+      - nose2

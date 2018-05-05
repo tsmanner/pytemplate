@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # run-tests.sh
 #
 # Sets up 

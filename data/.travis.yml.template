@@ -1,0 +1,25 @@
+# TravisCI YAML Config
+# Describes the unit test execution
+
+language:
+  python
+
+os:
+  - linux
+# Uncomment to enable Mac OSX builds.
+#  - osx
+
+# Add entries for all python versions to test.
+python:
+  - '2.7'
+  - '3.6'
+
+# Uncomment to disable shallow clone, allowing your TravisCI job to checkout other refs.
+# git:
+#   depth: false
+
+install:
+  pip install -r test_requirements.txt
+
+script:
+  {test_runner} {options} -s test

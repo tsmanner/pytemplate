@@ -1,23 +1,30 @@
 """
+Main application front-end
 """
 
 import argparse
+import logging
+import os
+import sys
 
 
 def parse_args(argv):
-    """
-    Handle the command line arguments.
+    """ Handle the command line arguments.
     """
     ap = argparse.ArgumentParser()
     ap.add_argument("config_file", help="The json config file to load.")
     ap.add_argument("flow", default=None, nargs="?", help="The flow from config_file to run.")
     ap.add_argument("--quiet", "-q", default=False, action="store_true", help="Disables shell progress prints.")
-    ap.add_argument("--verbose", "-v", default=False, action="store_true", help="Dump all process output to 'bajada.log'.")
-    ap.add_argument("--log", nargs=1, action="store", choices={"critical", "error", "warn", "warning", "info", "debug"}, help="Set the bajada debug logging level.")
+    ap.add_argument("--verbose", "-v", default=False, action="store_true",
+                    help="Dump all process output to 'bajada.log'.")
+    ap.add_argument("--log", nargs=1, action="store", choices={"critical", "error", "warn", "warning", "info", "debug"},
+                    help="Set the bajada debug logging level.")
     return ap.parse_args(argv[1:])
 
 
 def main(argv=sys.argv):
+    """ Entry point for a full run of pytemplate.
+    """
     args = parse_args(argv)
 
     # Set up the loggers.
@@ -36,7 +43,7 @@ def main(argv=sys.argv):
         logger_name = f"progress.{args.flow}"
         logging.getLogger(logger_name).setLevel(logging.INFO)
         if not args.quiet:
-            logging.getLogger(logger_name).addHandler(shell_handler)
+            logging.getLogger(logger_name).addHandler(terminal_handler)
         if args.verbose:
             logging.getLogger("").setLevel(logging.INFO)
             logging.getLogger("").addHandler(flow_log_handler)
