@@ -22,4 +22,4 @@ install:
   pip install -r test_requirements.txt
 
 script:
-  {test_runner} {options} -s test
+  {test_runner} {test_runner_options} -s test

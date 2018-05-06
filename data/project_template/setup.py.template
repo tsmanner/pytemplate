@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+"""
+Setup script for `bajada`.
+"""
+
+from setuptools import setup
+
+setup(
+    name="{project}",
+    version="0.1",
+    description="{description}",
+    author="{name}",
+    author_email="{email}",
+    url="{url}",
+    project_urls={{
+    }},
+    packages=[
+        "{project}"
+    ],
+    scripts=[
+    ],
+    setup_requires=[
+    ],
+    install_requires=[
+    ],
+    python_requires=">=3.6",
+)

@@ -15,6 +15,9 @@ setup(
     scripts=[
         "bin/pytemplate",
     ],
+    package_data={
+        "project_template": "project_template/*"
+    },
     # Libraries required by install
     install_requires=[
         "pyaml"

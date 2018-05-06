@@ -1,1 +1,1 @@
-from .template import main
+from .template import seed_project
