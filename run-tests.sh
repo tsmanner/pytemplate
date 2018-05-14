@@ -6,48 +6,37 @@
 
 # Print if log level is CRITICAL
 critical() {
-  if [ $__log_level -ge 0 ] ; then
-    echo -n "(C): "
-    "$@"
-  else
-    (2>&1 >/dev/null "$@")
-  fi
+  log 0 C "$@"
 }
 
 # Print if log level is ERROR
 error() {
-  if [ $__log_level -ge 1 ] ; then
-    echo -n "(E): "
-    "$@"
-  else
-    (2>&1 >/dev/null "$@")
-  fi
+  log 1 E "$@"
 }
 
 # Print if log level is WARN
 warn() {
-  if [ $__log_level -ge 2 ] ; then
-    echo -n "(W): "
-    "$@"
-  else
-    (2>&1 >/dev/null "$@")
-  fi
+  log 2 W "$@"
 }
 
 # Print if log level is INFO
 info() {
-  if [ $__log_level -ge 3 ] ; then
-    echo -n "(I): "
-    "$@"
-  else
-    (2>&1 >/dev/null "$@")
-  fi
+  log 3 I "$@"
 }
 
 # Print if log level is DEBUG
 debug() {
-  if [ $__log_level -ge 4 ] ; then
-    echo -n "(D): "
+  log 4 D "$@"
+}
+
+# Print if log level is >= $1
+log() {
+  __this_level=$1
+  shift 1
+  __prefix="$1"
+  shift 1
+  if [ $__log_level -ge $__this_level ] ; then
+    echo -n "($__prefix): "
     "$@"
   else
     (2>&1 >/dev/null "$@")
@@ -101,10 +90,19 @@ __do_pylint() {
   LOG_DIR=.
   PYLINT_LOG=$LOG_DIR/pylint-report
   PYLINT_BADGE=$LOG_DIR/pylint.svg
+  # Detect the test package
+  debug echo "Detecting packages..."
+  __packages="$(python -c 'import setuptools; print(" ".join(setuptools.find_packages()))')"
+  debug echo $__packages
+  # Append '/*' to each package name to hand off to pylint
+  __pylint_directories=${__packages/ //* }/*
+  __pylint_cmd="pylint $__pylint_directories test/*"
+  debug echo "PyLint Command: '$__pylint_cmd'"
+  debug echo
   info echo "PyLint: start ($PYLINT_LOG)"
   echo "Python $1" > $PYLINT_LOG
   echo "" >> $PYLINT_LOG
-  __pylint_out=$(2>&1 pylint pytemplate/* test/*)
+  __pylint_out=$(2>&1 $__pylint_cmd)
   __pylint_E=$(echo "$__pylint_out" | grep -c "E:")
   __pylint_W=$(echo "$__pylint_out" | grep -c "W:")
   __pylint_C=$(echo "$__pylint_out" | grep -c "C:")
@@ -131,6 +129,7 @@ __do_tests() {
   # This is always printed... otherwise what is the point?
   coverage run -m unittest discover -s test/
   warn coverage report
+  rm -f coverage.svg
   coverage-badge -o coverage.svg
   if [ "$__html_cov" = "1" ] ; then
     info echo "Generating html coverage into '$__html_cov_dir'"
@@ -175,7 +174,8 @@ __parse_yaml() {
 #
 
 __help="\
-usage: run-tests.sh [flags]
+usage: run-tests.sh [options]
+  -h --help                Display this help message.
   -v --verbose             Print everything!  Equivalent to --log 4
   -q --quiet               Produce only some output.  Equivalent to --log 3
   -s --silent              Only report errors.  Equivalent to --log 1
@@ -189,8 +189,7 @@ usage: run-tests.sh [flags]
   -C --no-recreate-venvs   Do not recreate Python Virtual Environments.
   -l --pylint              Run PyLint static analysis.
   -L --no-pylint           No not run PyLint static analysis.
-     --htmlcov [dir]       Generate an HTML coverage report into 'dir'.
-"
+     --htmlcov [dir]       Generate an HTML coverage report into 'dir' (default=htmlcov/)."
 
 __recreate_venvs=0
 __pylint=1
@@ -241,7 +240,6 @@ debug echo "__pylint          $__pylint"
 debug echo "__log_level       $__log_level"
 debug echo "__html_cov        $__html_cov"
 debug echo "__html_cov_dir    '$__html_cov_dir'"
-
 
 # Enable dot glob so we will see any "hidden" yml files
 shopt -s dotglob
