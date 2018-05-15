@@ -6,27 +6,27 @@
 
 # Print if log level is CRITICAL
 critical() {
-  log 0 C "$@"
+  log 0 "(C): " "$@"
 }
 
 # Print if log level is ERROR
 error() {
-  log 1 E "$@"
+  log 1 "(E): " "$@"
 }
 
 # Print if log level is WARN
 warn() {
-  log 2 W "$@"
+  log 2 "(W): " "$@"
 }
 
 # Print if log level is INFO
 info() {
-  log 3 I "$@"
+  log 3 "(I): " "$@"
 }
 
 # Print if log level is DEBUG
 debug() {
-  log 4 D "$@"
+  log 4 "(D): " "$@"
 }
 
 # Print if log level is >= $1
@@ -36,7 +36,7 @@ log() {
   __prefix="$1"
   shift 1
   if [ $__log_level -ge $__this_level ] ; then
-    echo -n "($__prefix): "
+    echo -n "$__prefix"
     "$@"
   else
     (2>&1 >/dev/null "$@")
@@ -127,8 +127,8 @@ __do_pylint() {
 __do_tests() {
   info echo "--Running Python$1 Tests--"
   # This is always printed... otherwise what is the point?
-  coverage run -m unittest discover -s test/
-  warn coverage report
+  coverage run $__branch -m unittest discover -s test/
+  log 2 "" coverage report
   rm -f coverage.svg
   coverage-badge -o coverage.svg
   if [ "$__html_cov" = "1" ] ; then
@@ -169,6 +169,16 @@ __parse_yaml() {
 }
 
 
+__parse_rc() {
+  # For Windows compatibility, replace any CRLF with LF
+  local rc_file=($(cat $1 | tr '\r\n' '\n'))
+  local token
+  for token in "${rc_file[@]}" ; do
+    args+=("$token")
+  done
+}
+
+
 #
 # Main body
 #
@@ -191,47 +201,62 @@ usage: run-tests.sh [options]
   -L --no-pylint           No not run PyLint static analysis.
      --htmlcov [dir]       Generate an HTML coverage report into 'dir' (default=htmlcov/)."
 
+# Initialize variables
 __recreate_venvs=0
 __pylint=1
 __log_level=3
+__branch=""
 __html_cov=0
 __html_cov_dir=""
 
-while [ "$1" != "" ] ; do
-  if [ "$1" = "-v" ] || [ "$1" = "--verbose" ] ; then
+# Handle .testrc and arguments
+if [ -e ".testrc" ] ; then
+  __parse_rc ".testrc"
+fi
+
+# Add command line args after the rc args
+args+=("$@")
+
+
+while [ "${args[0]}" != "" ] ; do
+  if [ "${args[0]}" = "-v" ] || [ "${args[0]}" = "--verbose" ] ; then
     __log_level=4
-  elif [ "$1" = "-q" ] || [ "$1" = "--quiet" ] ; then
+  elif [ "${args[0]}" = "-q" ] || [ "${args[0]}" = "--quiet" ] ; then
     __log_level=3
-  elif [ "$1" = "-s" ] || [ "$1" = "--silent" ] ; then
+  elif [ "${args[0]}" = "-s" ] || [ "${args[0]}" = "--silent" ] ; then
     __log_level=1
-  elif [ "$1" = "-c" ] || [ "$1" = "--recreate-venvs" ] ; then
+  elif [ "${args[0]}" = "-c" ] || [ "${args[0]}" = "--recreate-venvs" ] ; then
     __recreate_venvs=1
-  elif [ "$1" = "-C" ] || [ "$1" = "--no-recreate-venvs" ] ; then
+  elif [ "${args[0]}" = "-C" ] || [ "${args[0]}" = "--no-recreate-venvs" ] ; then
     __recreate_venvs=0
-  elif [ "$1" = "-l" ] || [ "$1" = "--pylint" ] ; then
+  elif [ "${args[0]}" = "-l" ] || [ "${args[0]}" = "--pylint" ] ; then
     __pylint=1
-  elif [ "$1" = "-L" ] || [ "$1" = "--no-pylint" ] ; then
+  elif [ "${args[0]}" = "-L" ] || [ "${args[0]}" = "--no-pylint" ] ; then
     __pylint=0
-  elif [ "$1" = "--log" ] ; then
-    shift 1
-    __log_level=$1
-  elif [ "$1" = "--htmlcov" ] ; then
+  elif [ "${args[0]}" = "--log" ] ; then
+    args=(${args[@]:1})
+    __log_level=${args[0]}
+  elif [ "${args[0]}" = "--branch" ] ; then
+    __branch="--branch"
+  elif [ "${args[0]}" = "--no-branch" ] ; then
+    __branch=""
+  elif [ "${args[0]}" = "--htmlcov" ] ; then
     __html_cov=1
-    if [ "$2" = "" ] || [ "${2:0:1}" = "-" ] ; then
+    if [ "${args[1]}" = "" ] || [ "${args[1]:0:1}" = "-" ] ; then
       __html_cov_dir="htmlcov/"
     else
-      __html_cov_dir="$2"
-      shift 1
+      __html_cov_dir="${args[1]}"
+      args=(${args[@]:1})
     fi
-  elif [ "$1" = "-h" ] || [ "$1" = "--help" ] ; then
+  elif [ "${args[0]}" = "-h" ] || [ "${args[0]}" = "--help" ] ; then
     echo "$__help"
     exit 0
   else
-    echo "Unrecognized option '$1'"
+    echo "Unrecognized option '${args[0]}'"
     echo "$__help"
     exit 1
   fi
-  shift 1
+  args=(${args[@]:1})
 done
 
 
