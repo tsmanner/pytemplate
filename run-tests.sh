@@ -70,15 +70,17 @@ __create_venv() {
     info echo "    python$1 not found!"
     exit 1
   else
-    __virtualenv=$(dirname $__python)/virtualenv
-    debug $__virtualenv -v -p $__python .venv$1
-    if [ "$?" != "0" ] ; then
-      __virtualenv=$(which virtualenv)
+    __virtualenv=$(which virtualenv)
+    __virtualenv_by_version=$(dirname $__python)/virtualenv
+    if [ -e $__virtualenv_by_version ] ; then
+      debug $__virtualenv_by_version -v -p $__python .venv$1
+      rc=$?
+    elif [  -e $__virtualenv ] ; then
       debug $__virtualenv -v -p $__python .venv$1
-      if [ "$?" != "0" ] ; then
-        info echo "    virtualenv executable not found for $__python!"
-        exit 1
-      fi
+      rc=$?
+    else
+      info echo "    virtualenv executable not found for $__python!"
+      exit 1
     fi
     info echo "    python$1 ($__python) -> .venv$1"
   fi

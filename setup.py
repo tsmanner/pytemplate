@@ -16,7 +16,7 @@ setup(
         "bin/pytemplate",
     ],
     package_data={
-        "project_template": "project_template/*"
+        "": ["data/*"],
     },
     # Libraries required by install
     install_requires=[

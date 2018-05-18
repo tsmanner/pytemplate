@@ -12,26 +12,6 @@ TravisCI:
       - '2.7'
       - '3.6'
 
-  test_runner:
-    default:
-      nose2
-    choices:
-      nose:
-        options:
-          - ""
-      nose2:
-        options:
-          - '--coverage {package_dirs}'
-      unittest:
-        options:
-          - ""
-      unittest2:
-        options:
-          - ""
-      pytest:
-        options:
-          - ""
-
 test_requirements:
   concrete_packages:
     format:
@@ -48,3 +28,4 @@ test_requirements:
       - pylint
     default:
       - nose2
+
