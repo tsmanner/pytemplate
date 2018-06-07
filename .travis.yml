@@ -16,4 +16,4 @@ install:
   pip install -r test_requirements.txt
 
 script:
-  nose2 --coverage . -s test
+  coverage run -m unittest discover -s test
