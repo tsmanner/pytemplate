@@ -121,7 +121,11 @@ __do_pylint() {
   info echo "$__summary"
   info echo
   rm -f $PYLINT_BADGE
-  anybadge -l pylint -v $__rating -f $PYLINT_BADGE 2=red 4=orange 8=yellow 10=green
+  if [ -e anybadge ] ; then
+    anybadge -l pylint -v $__rating -f $PYLINT_BADGE 2=red 4=orange 8=yellow 10=green
+  else
+    warn echo "anybdage not found, PyLint badge not created."
+  fi
 }
 
 
@@ -129,7 +133,7 @@ __do_pylint() {
 __do_tests() {
   info echo "--Running Python$1 Tests--"
   # This is always printed... otherwise what is the point?
-  coverage run $__branch -m unittest discover -s test/
+  coverage run $__branch -m unittest discover -s $__test_dir
   log 2 "" coverage report
   rm -f coverage.svg
   coverage-badge -o coverage.svg
@@ -201,7 +205,8 @@ usage: run-tests.sh [options]
   -C --no-recreate-venvs   Do not recreate Python Virtual Environments.
   -l --pylint              Run PyLint static analysis.
   -L --no-pylint           No not run PyLint static analysis.
-     --htmlcov [dir]       Generate an HTML coverage report into 'dir' (default=htmlcov/)."
+     --htmlcov [dir]       Generate an HTML coverage report into 'dir' (default=htmlcov/).
+     --test-dir <dir>      Do test discovery from <dir> (default=test/)."
 
 # Initialize variables
 __recreate_venvs=0
@@ -210,6 +215,7 @@ __log_level=3
 __branch=""
 __html_cov=0
 __html_cov_dir=""
+__test_dir="test"
 
 # Handle .testrc and arguments
 if [ -e ".testrc" ] ; then
@@ -248,8 +254,13 @@ while [ "${args[0]}" != "" ] ; do
       __html_cov_dir="htmlcov/"
     else
       __html_cov_dir="${args[1]}"
+      # Advance args
       args=(${args[@]:1})
     fi
+  elif [ "${args[0]}" = "--test-dir" ] ; then
+    __test_dir="${args[1]}"
+    # Advance args
+    args=(${args[@]:1})
   elif [ "${args[0]}" = "-h" ] || [ "${args[0]}" = "--help" ] ; then
     echo "$__help"
     exit 0
@@ -258,6 +269,7 @@ while [ "${args[0]}" != "" ] ; do
     echo "$__help"
     exit 1
   fi
+  # Advance args
   args=(${args[@]:1})
 done
 

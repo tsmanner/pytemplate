@@ -22,4 +22,5 @@ install:
   pip install -r test_requirements.txt
 
 script:
-  {test_runner} {test_runner_options} -s test
+  coverage run -m unittest discover -s test
+#  {test_runner} {test_runner_options} -s test

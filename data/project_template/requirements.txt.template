@@ -1,3 +1,7 @@
 --index-url https://pypi.python.org/simple/
 
+# To specify a library etc from a particular repo:
+# -e https://github.com/<username>/<reponame>.git#egg=bar
+
+# Install all requirements found in `setup.py`
 -e .
