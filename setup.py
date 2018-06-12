@@ -1,3 +1,9 @@
+"""
+Setup Script
+    Describes to `pip` how to install `pytemplate` with abstract dependencies.
+    See `requirements.txt` and `test_requirements.txt` for the concrete dependencies.
+"""
+
 from setuptools import setup
 
 setup(

@@ -4,17 +4,21 @@ Main application front-end
 import os
 import shutil
 
-from pytemplate.iterative_formatter import IterativeFormatter
+from pytemplate.incremental_formatter import IncrementalFormatter
 
 
 def produce_file(template_file, target_file, **kwargs):
-    formatter = IterativeFormatter()
+    """ Uses an `IncrementalFormatter` to specialize a template file.
+    """
+    formatter = IncrementalFormatter()
     with open(template_file) as template:
         with open(target_file, "w") as target:
             target.write(formatter.format(template.read(), **kwargs))
 
 
 def get_input():
+    """ Queries the user for input.
+    """
     return {
         "project": input("Project Name: "),
         "description": input("Description: "),

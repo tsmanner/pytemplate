@@ -1,20 +1,30 @@
 """
-Unit Tests for the `IterativeFormatter` class
+Unit Tests for the `IncrementalFormatter` class.
 """
 import unittest
 
-from pytemplate.iterative_formatter import IterativeFormatter
+from pytemplate.incremental_formatter import IncrementalFormatter
 
 
 # noinspection PyUnreachableCode
-class TestIterativeFormatter(unittest.TestCase):
+class TestIncrementalFormatter(unittest.TestCase):
+    """ `TestCase` for `IncrementalFormatter`.
+    """
+
     def setUp(self):
-        self.formatter = IterativeFormatter()
+        """ Instantiate a single IncrementalFormatter to use in the unit tests.
+        """
+        self.formatter = IncrementalFormatter()
 
     def tearDown(self):
+        """ Clean up the objects we allocated at the end of the tests.
+        """
         del self.formatter
 
     def test_format(self):
+        """ Test routine for `IncrementalFormatter.format`.
+        """
+
         with self.subTest("No Format Specifiers"):
             test_string = "hello world."
             self.assertEqual(test_string, self.formatter.format(test_string))

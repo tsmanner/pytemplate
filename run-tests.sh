@@ -89,20 +89,19 @@ __create_venv() {
 
 # Run PyLint
 __do_pylint() {
-  LOG_DIR=.
-  PYLINT_LOG=$LOG_DIR/pylint-report
-  PYLINT_BADGE=$LOG_DIR/pylint.svg
   # Detect the test package
   debug echo "Detecting packages..."
   __packages="$(python -c 'import setuptools; print(" ".join(setuptools.find_packages()))')"
   debug echo $__packages
   # Append '/*' to each package name to hand off to pylint
   __pylint_directories=${__packages/ //* }/*
-  __pylint_cmd="pylint $__pylint_directories test/*"
+  __pylint_files="$(find . -name '*.py' ! -path '*.venv*' -printf '%p ')"
+  debug echo "__pylint_files: $__pylint_files"
+  __pylint_cmd="pylint $__pylint_files"
   debug echo "PyLint Command: '$__pylint_cmd'"
   debug echo
   info echo "PyLint: start ($PYLINT_LOG)"
-  echo "Python $1" > $PYLINT_LOG
+  echo "Python $1" >> $PYLINT_LOG
   echo "" >> $PYLINT_LOG
   __pylint_out=$(2>&1 $__pylint_cmd)
   __pylint_E=$(echo "$__pylint_out" | grep -c "E:")
@@ -121,7 +120,7 @@ __do_pylint() {
   info echo "$__summary"
   info echo
   rm -f $PYLINT_BADGE
-  if [ -e anybadge ] ; then
+  if [ $(2>/dev/null which anybadge) ] ; then
     anybadge -l pylint -v $__rating -f $PYLINT_BADGE 2=red 4=orange 8=yellow 10=green
   else
     warn echo "anybdage not found, PyLint badge not created."
@@ -201,21 +200,26 @@ usage: run-tests.sh [options]
                              2 = WARNING
                              3 = INFO
                              4 = DEBUG
-  -c --recreate-venvs      Force creation of Python Virtual Environments.
-  -C --no-recreate-venvs   Do not recreate Python Virtual Environments.
-  -l --pylint              Run PyLint static analysis.
-  -L --no-pylint           No not run PyLint static analysis.
+     --recreate-venvs      Force creation of Python Virtual Environments.
+     --no-recreate-venvs   Do not force recreation of Python Virtual Environments.
+     --pylint              Run PyLint static analysis.
+     --no-pylint           Do not run PyLint static analysis.
+     --branch              Measure branch coverage in addition to statement coverage.
+     --no-branch           Do not measure branch coverage in addition to statement coverage.
      --htmlcov [dir]       Generate an HTML coverage report into 'dir' (default=htmlcov/).
-     --test-dir <dir>      Do test discovery from <dir> (default=test/)."
+     --test-dir <dir>      Do test discovery from <dir> (default=test/).
+     --skip-tests          Skip unit testing, venv creation and PyLint will still run normally.
+     --no-skip-tests       Do not skip unit testing."
 
 # Initialize variables
+__log_level=3
 __recreate_venvs=0
 __pylint=1
-__log_level=3
 __branch=""
 __html_cov=0
 __html_cov_dir=""
 __test_dir="test"
+__skip_tests=0
 
 # Handle .testrc and arguments
 if [ -e ".testrc" ] ; then
@@ -227,43 +231,79 @@ args+=("$@")
 
 
 while [ "${args[0]}" != "" ] ; do
-  if [ "${args[0]}" = "-v" ] || [ "${args[0]}" = "--verbose" ] ; then
+  #
+  # Help
+  #
+  if [ "${args[0]}" = "-h" ] || [ "${args[0]}" = "--help" ] ; then
+    echo "$__help"
+    exit 0
+  #
+  # Logging
+  #
+  elif   [ "${args[0]}" = "-v" ] || [ "${args[0]}" = "--verbose" ] ; then
     __log_level=4
   elif [ "${args[0]}" = "-q" ] || [ "${args[0]}" = "--quiet" ] ; then
     __log_level=3
   elif [ "${args[0]}" = "-s" ] || [ "${args[0]}" = "--silent" ] ; then
     __log_level=1
-  elif [ "${args[0]}" = "-c" ] || [ "${args[0]}" = "--recreate-venvs" ] ; then
-    __recreate_venvs=1
-  elif [ "${args[0]}" = "-C" ] || [ "${args[0]}" = "--no-recreate-venvs" ] ; then
-    __recreate_venvs=0
-  elif [ "${args[0]}" = "-l" ] || [ "${args[0]}" = "--pylint" ] ; then
-    __pylint=1
-  elif [ "${args[0]}" = "-L" ] || [ "${args[0]}" = "--no-pylint" ] ; then
-    __pylint=0
   elif [ "${args[0]}" = "--log" ] ; then
+    # Consume the arg following '--log'
+    __log_level="${args[1]}"
+    # Advance args
     args=(${args[@]:1})
-    __log_level=${args[0]}
+  #
+  # Virtual Environment Control
+  #
+  elif [ "${args[0]}" = "--recreate-venvs" ] ; then
+    __recreate_venvs=1
+  elif [ "${args[0]}" = "--no-recreate-venvs" ] ; then
+    __recreate_venvs=0
+  #
+  # PyLint Controls
+  #
+  elif [ "${args[0]}" = "--pylint" ] ; then
+    __pylint=1
+  elif [ "${args[0]}" = "--no-pylint" ] ; then
+    __pylint=0
+  #
+  # Coverage Controls
+  #
+  #   Measure branch coverage in addition to statement coverage.
   elif [ "${args[0]}" = "--branch" ] ; then
     __branch="--branch"
+  #   Do not measure branch coverage in addition to statement coverage.
   elif [ "${args[0]}" = "--no-branch" ] ; then
     __branch=""
+  #   Produce an HTML coverage report.
   elif [ "${args[0]}" = "--htmlcov" ] ; then
     __html_cov=1
     if [ "${args[1]}" = "" ] || [ "${args[1]:0:1}" = "-" ] ; then
       __html_cov_dir="htmlcov/"
     else
+      # Consume the arg following '--htmlcov'
       __html_cov_dir="${args[1]}"
       # Advance args
       args=(${args[@]:1})
     fi
+  #
+  # Test Discovery Control
+  #
+  #   Test Discovery Start Directory
   elif [ "${args[0]}" = "--test-dir" ] ; then
+    # Consume the arg following '--test-dir'
     __test_dir="${args[1]}"
     # Advance args
     args=(${args[@]:1})
-  elif [ "${args[0]}" = "-h" ] || [ "${args[0]}" = "--help" ] ; then
-    echo "$__help"
-    exit 0
+  #
+  # Skip Tests
+  #
+  elif [ "${args[0]}" = "--skip-tests" ] ; then
+    __skip_tests=1
+  elif [ "${args[0]}" = "--no-skip-tests" ] ; then
+    __skip_tests=0
+  #
+  # Unrecognized Option/Argument
+  #
   else
     echo "Unrecognized option '${args[0]}'"
     echo "$__help"
@@ -274,11 +314,21 @@ while [ "${args[0]}" != "" ] ; do
 done
 
 
-debug echo "__recreate_venvs  $__recreate_venvs"
-debug echo "__pylint          $__pylint"
-debug echo "__log_level       $__log_level"
-debug echo "__html_cov        $__html_cov"
-debug echo "__html_cov_dir    '$__html_cov_dir'"
+debug echo "Session Variables:"
+debug echo "    __recreate_venvs  '$__recreate_venvs'"
+debug echo "    __pylint          '$__pylint'"
+debug echo "    __log_level       '$__log_level'"
+debug echo "    __html_cov        '$__html_cov'"
+debug echo "    __html_cov_dir    '$__html_cov_dir'"
+debug echo "    __test_dir        '$__test_dir'"
+debug echo "    __skip_tests      '$__skip_tests'"
+
+
+# PyLint Variables
+LOG_DIR=.
+PYLINT_LOG=$LOG_DIR/pylint-report
+PYLINT_BADGE=$LOG_DIR/pylint.svg
+
 
 # Enable dot glob so we will see any "hidden" yml files
 shopt -s dotglob
@@ -316,15 +366,24 @@ done
 info echo "done."
 info echo
 
+# If we're going to run PyLint, reset the log file
+if [ "$__pylint" = "1" ] ; then
+  echo "" > $PYLINT_LOG
+fi
+
 for __i in "${!__rcs[@]}" ; do
   if [ "${__rcs[$__i]}" = "0" ] ; then
     __version="${__versions[$__i]}"
     . .venv$__version/bin/activate
-    # Install the test package
-    debug pip install -r test_requirements.txt
     if [ "$__pylint" = "1" ] ; then
       __do_pylint $__version
     fi
-    __do_tests $__version
+    if [ "$__skip_tests" = "1" ] ; then
+      warn echo "Python$__version Unit Testing Skipped (--skip-tests flag set)"
+    else
+      # Install the test package, if we're doing the unit tests.
+      debug pip install -r test_requirements.txt
+      __do_tests $__version
+    fi
   fi
 done
