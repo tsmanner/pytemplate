@@ -332,9 +332,14 @@ PYLINT_BADGE=$LOG_DIR/pylint.svg
 
 # Enable dot glob so we will see any "hidden" yml files
 shopt -s dotglob
-debug echo "__parse_yml *.yml"
 __versions=()
-__parse_yaml *.yml
+# Capture all the yml files in here
+__yml_files=($(ls *.yml))
+debug echo "__parse_yml $__yml_files"
+# Parse each of them
+for __file in "${__yml_files[@]}" ; do
+  __parse_yaml $__file
+done
 # Disable dot glob
 shopt -u dotglob
 # Get the array of version numbers

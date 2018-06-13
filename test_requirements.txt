@@ -6,9 +6,6 @@
 # Install all requirements found in `setup.py`
 -e .
 
-pyOpenSSL
-ndg-httpsclient
-pyasn1
 anybadge==0.1.0.dev2
 coverage>=4.5
 coverage-badge
